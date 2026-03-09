@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.3.1",
@@ -8,7 +9,8 @@
     "googleapis": "^171.4.0",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.1.0",
-    "mongoose": "^9.2.4"
+    "mongoose": "^9.2.4",
+    "sib-api-v3-sdk": "^8.5.0"
   },
   "name": "gro-edu",
   "version": "1.0.0",

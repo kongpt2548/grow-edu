@@ -5,43 +5,101 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>สมัครสมาชิก - Grow EDU</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-[#E1F5FE] flex items-center justify-center min-h-screen font-sans">
+<body class="bg-[#E1F5FE] flex items-center justify-center min-h-screen p-4 font-sans">
     
-    <div class="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full border-t-4 border-[#1A73E8]">
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg max-w-md w-full border-t-4 border-[#1A73E8]">
         <div class="text-center mb-6">
             <h1 class="text-3xl font-bold text-[#1A73E8]">Grow EDU</h1>
-            <p class="text-gray-500 mt-2">เติบโตไปพร้อมกับความรู้ที่ใช่</p>
+            <p class="text-gray-500 mt-2">เข้าร่วมเป็นส่วนหนึ่งกับการเรียนรู้</p>
         </div>
 
-        <form action="/register" method="POST" class="space-y-4">
+        <div id="step1" class="space-y-4">
             <div>
-                <label class="block text-gray-700 font-medium mb-1">ชื่อผู้ใช้ (Username)</label>
-                <input type="text" name="username" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A73E8]">
+                <label class="block text-gray-700 font-medium mb-1">ชื่อผู้ใช้</label>
+                <input type="text" id="reg_username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1A73E8] outline-none">
             </div>
-            
             <div>
-                <label class="block text-gray-700 font-medium mb-1">รหัสผ่าน (Password)</label>
-                <input type="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A73E8]">
+                <label class="block text-gray-700 font-medium mb-1">อีเมล</label>
+                <input type="email" id="reg_email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1A73E8] outline-none">
             </div>
-
+            <div>
+                <label class="block text-gray-700 font-medium mb-1">รหัสผ่าน</label>
+                <input type="password" id="reg_password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1A73E8] outline-none">
+            </div>
             <div>
                 <label class="block text-gray-700 font-medium mb-1">สมัครในฐานะ</label>
-                <select name="role" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A73E8] bg-white">
+                <select id="reg_role" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white">
                     <option value="student">👨‍🎓 นักเรียน</option>
                     <option value="tutor">👨‍🏫 ติวเตอร์</option>
                 </select>
             </div>
+            <button onclick="sendOTP()" id="btn_otp" class="w-full bg-[#1A73E8] text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">ส่งรหัสยืนยันไปที่อีเมล</button>
+        </div>
 
-            <button type="submit" class="w-full bg-[#1A73E8] text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300 font-bold mt-6">
-                สร้างบัญชี
-            </button>
-        </form>
-
-        <p class="text-center mt-4 text-sm text-gray-600">
-            มีบัญชีอยู่แล้ว? <a href="/login" class="text-[#1A73E8] hover:underline font-bold">เข้าสู่ระบบ</a>
-        </p>
+        <div id="step2" class="hidden space-y-4 text-center">
+            <i class="fa-solid fa-envelope-open-text text-5xl text-[#1A73E8] mb-2"></i>
+            <h2 class="text-xl font-bold">ยืนยันอีเมลของคุณ</h2>
+            <p class="text-sm text-gray-500 px-4">เราส่งรหัส OTP 6 หลักไปที่อีเมลของคุณแล้ว กรุณานำมามาใส่ด้านล่าง</p>
+            <input type="text" id="reg_otp" maxlength="6" class="w-full px-4 py-3 border-2 border-[#1A73E8] rounded-lg text-center text-2xl font-bold tracking-[10px] outline-none">
+            <button onclick="verifyAndRegister()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition shadow-md">ยืนยันและสมัครสมาชิก</button>
+            <button onclick="location.reload()" class="text-sm text-gray-400 underline">ย้อนกลับไปแก้ไขข้อมูล</button>
+        </div>
     </div>
 
+    <script>
+        async function sendOTP() {
+            const username = document.getElementById('reg_username').value;
+            const email = document.getElementById('reg_email').value;
+            const password = document.getElementById('reg_password').value;
+            const role = document.getElementById('reg_role').value;
+
+            if(!username || !email || !password) return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูลให้ครบถ้วน', 'warning');
+
+            const btn = document.getElementById('btn_otp');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังส่ง...';
+            btn.disabled = true;
+
+            const res = await fetch('/send-otp', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username, email })
+            });
+            const data = await res.json();
+
+            if(res.ok) {
+                document.getElementById('step1').classList.add('hidden');
+                document.getElementById('step2').classList.remove('hidden');
+            } else {
+                Swal.fire('ผิดพลาด', data.message, 'error');
+                btn.innerHTML = 'ส่งรหัสยืนยันไปที่อีเมล';
+                btn.disabled = false;
+            }
+        }
+
+        async function verifyAndRegister() {
+            const username = document.getElementById('reg_username').value;
+            const email = document.getElementById('reg_email').value;
+            const password = document.getElementById('reg_password').value;
+            const role = document.getElementById('reg_role').value;
+            const otp = document.getElementById('reg_otp').value;
+
+            const res = await fetch('/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ username, email, password, role, otp })
+            });
+            const data = await res.json();
+
+            if(res.ok) {
+                Swal.fire({ icon: 'success', title: 'สำเร็จ!', text: 'สมัครสมาชิกเรียบร้อย', showConfirmButton: false, timer: 1500 })
+                .then(() => window.location.href = '/login');
+            } else {
+                Swal.fire('รหัส OTP ไม่ถูกต้อง', data.message, 'error');
+            }
+        }
+    </script>
 </body>
 </html>
