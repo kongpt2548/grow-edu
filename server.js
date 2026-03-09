@@ -99,27 +99,29 @@ app.get('/tutor/upload', (req, res) => {
     res.render('tutor_upload');
 });
 
-// 3. ระบบรับข้อมูลอัปโหลดคลิป (แก้บั๊ก Error แล้ว!)
+// 3. ระบบรับข้อมูลอัปโหลดคลิป (แบบ API + SweetAlert)
 app.post('/tutor/upload', async (req, res) => {
     try {
-        if (!req.session.userId) return res.redirect('/login');
+        if (!req.session.userId) return res.status(401).json({ message: "กรุณาเข้าสู่ระบบ" });
         
         const { title, subject, level, driveFileId, price } = req.body;
         const newVideo = new Video({
-            tutorId: req.session.userId, // ดึง ID จากคนที่ล็อกอินอยู่ (จุดนี้แหละที่ทำพังรอบก่อน)
+            tutorId: req.session.userId,
             title, 
             subject, 
             topic: title,
             level, 
             driveFileId, 
             price,
-            status: 'pending' // ส่งให้แอดมินตรวจ
+            status: 'pending'
         });
         await newVideo.save();
-        res.send('<script>alert("ส่งคลิปให้แอดมินตรวจสอบเรียบร้อย!"); window.location="/tutor/income";</script>');
+        
+        // ส่งข้อความกลับไปให้หน้าเว็บโชว์กล่องสวยๆ
+        res.json({ success: true, message: "ส่งคลิปให้แอดมินตรวจสอบเรียบร้อย!" });
     } catch (err) {
         console.error(err);
-        res.status(500).send("Upload Error: ข้อมูลไม่ครบถ้วน");
+        res.status(500).json({ success: false, message: "เกิดข้อผิดพลาด ข้อมูลไม่ครบถ้วน" });
     }
 });
 
@@ -148,7 +150,7 @@ app.get('/api/qr/:amount', async (req, res) => {
         if (!amount || amount <= 0) return res.status(204).end(); 
         
         // ⚠️ เปลี่ยนเป็นเบอร์พร้อมเพย์ของคุณตรงนี้
-        const promptpayId = '0800000000'; 
+        const promptpayId = '0980573163'; 
         
         const payload = generatePayload(promptpayId, { amount });
         const buffer = await QRCode.toBuffer(payload, {

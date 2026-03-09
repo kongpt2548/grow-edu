@@ -5,24 +5,28 @@
     <title>อัปโหลดบทเรียน - Grow EDU</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>body { font-family: 'Kanit', sans-serif; }</style>
 </head>
-<body class="bg-gray-100 min-h-screen p-8">
-    <div class="max-w-2xl mx-auto bg-white p-8 rounded-3xl shadow-lg border-t-4 border-[#1A73E8]">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">📤 อัปโหลดวิดีโอการสอนใหม่</h2>
-            <a href="/tutor" class="text-gray-500 hover:text-[#1A73E8]">กลับหน้าหลัก</a>
+<body class="bg-gray-100 min-h-screen p-8 flex flex-col justify-center">
+    <div class="max-w-2xl w-full mx-auto bg-white p-8 md:p-10 rounded-3xl shadow-lg border-t-4 border-[#1A73E8]">
+        
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800"><i class="fa-solid fa-cloud-arrow-up text-[#1A73E8] mr-2"></i> อัปโหลดวิดีโอสอน</h2>
+            <a href="/tutor" class="text-gray-500 hover:text-[#1A73E8] transition font-bold"><i class="fa-solid fa-arrow-left"></i> กลับหน้าหลัก</a>
         </div>
         
-        <form action="/tutor/upload" method="POST" class="space-y-5">
+        <form id="uploadForm" onsubmit="uploadVideo(event)" class="space-y-5">
             <div>
                 <label class="block font-bold text-gray-700 mb-1">ชื่อคลิปวิดีโอ / หัวข้อ</label>
-                <input type="text" name="title" required class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl focus:outline-none focus:border-[#1A73E8]" placeholder="เช่น สรุปสูตรคณิต ม.3 เทอม 1">
+                <input type="text" name="title" required class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl focus:outline-none focus:border-[#1A73E8] transition" placeholder="เช่น สรุปสูตรคณิต ม.3 เทอม 1">
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block font-bold text-gray-700 mb-1">ระดับชั้น</label>
-                    <select name="level" class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl focus:outline-none focus:border-[#1A73E8]">
+                    <select name="level" class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl focus:outline-none focus:border-[#1A73E8] transition cursor-pointer">
                         <option value="ประถมศึกษา">ประถมศึกษา</option>
                         <option value="มัธยมต้น">มัธยมต้น</option>
                         <option value="มัธยมปลาย">มัธยมปลาย</option>
@@ -30,7 +34,7 @@
                 </div>
                 <div>
                     <label class="block font-bold text-gray-700 mb-1">วิชา</label>
-                    <select name="subject" class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl focus:outline-none focus:border-[#1A73E8]">
+                    <select name="subject" class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl focus:outline-none focus:border-[#1A73E8] transition cursor-pointer">
                         <option value="คณิตศาสตร์">คณิตศาสตร์</option>
                         <option value="ภาษาไทย">ภาษาไทย</option>
                         <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
@@ -43,16 +47,77 @@
                     </select>
                 </div>
             </div>
+
             <div>
-                <label class="block font-bold text-gray-700 mb-1">Google Drive File ID (ลิงก์คลิป)</label>
-                <input type="text" name="driveFileId" required class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl focus:outline-none focus:border-[#1A73E8]" placeholder="ใส่รหัส ID ไฟล์จาก Google Drive">
+                <label class="block font-bold text-gray-700 mb-1">ลิงก์ Google Drive</label>
+                <div class="relative">
+                    <i class="fa-brands fa-google-drive absolute left-4 top-4 text-gray-400"></i>
+                    <input type="text" name="driveFileId" required class="w-full bg-gray-50 border-2 border-gray-200 py-3 pl-11 pr-4 rounded-xl focus:outline-none focus:border-[#1A73E8] transition" placeholder="วางลิงก์หรือ File ID ที่นี่">
+                </div>
+                <p class="text-xs text-orange-500 mt-2"><i class="fa-solid fa-circle-exclamation"></i> อย่าลืมเปิดสิทธิ์ไฟล์เป็น "ทุกคนที่มีลิงก์ (Anyone with the link)"</p>
             </div>
+
             <div>
                 <label class="block font-bold text-gray-700 mb-1">ราคาคอร์ส (บาท)</label>
-                <input type="number" name="price" required min="5" value="5" class="w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl focus:outline-none focus:border-[#1A73E8]" placeholder="ระบุราคา">
+                <div class="relative w-1/2">
+                    <span class="absolute left-4 top-3.5 font-bold text-gray-500">฿</span>
+                    <input type="number" name="price" required min="5" value="5" class="w-full bg-gray-50 border-2 border-gray-200 py-3 pl-10 pr-4 rounded-xl focus:outline-none focus:border-green-500 text-green-600 font-bold text-lg transition shadow-inner">
+                </div>
             </div>
-            <button type="submit" class="w-full bg-[#1A73E8] hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg shadow-md transition">ส่งให้ทีมงานตรวจสอบ</button>
+
+            <button type="submit" id="btn-submit" class="w-full bg-[#1A73E8] hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition transform hover:-translate-y-1 mt-4 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i> ส่งให้ทีมงานตรวจสอบ
+            </button>
         </form>
     </div>
+
+    <script>
+        function uploadVideo(e) {
+            e.preventDefault(); // หยุดการรีเฟรชหน้าเว็บ
+            
+            const btn = document.getElementById('btn-submit');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปโหลดข้อมูล...';
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+
+            // ดึงข้อมูลจากฟอร์ม
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            // ส่งข้อมูลไปหลังบ้าน
+            fetch('/tutor/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'อัปโหลดสำเร็จ!',
+                        text: result.message,
+                        confirmButtonColor: '#1A73E8',
+                        confirmButtonText: 'ไปดูรายได้ของฉัน'
+                    }).then(() => {
+                        window.location.href = '/tutor/income'; // เด้งไปหน้ารายได้เมื่อกด OK
+                    });
+                } else {
+                    Swal.fire('เกิดข้อผิดพลาด', result.message, 'error');
+                    resetButton(btn);
+                }
+            })
+            .catch(err => {
+                Swal.fire('ผิดพลาด', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', 'error');
+                resetButton(btn);
+            });
+        }
+
+        function resetButton(btn) {
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ส่งให้ทีมงานตรวจสอบ';
+            btn.disabled = false;
+            btn.classList.remove('opacity-70', 'cursor-not-allowed');
+        }
+    </script>
 </body>
 </html>
