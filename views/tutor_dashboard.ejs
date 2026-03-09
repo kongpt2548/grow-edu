@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แดชบอร์ดติวเตอร์ - Grow EDU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <nav class="bg-indigo-600 p-4 text-white shadow-md flex justify-between items-center">
+        <h1 class="text-xl font-bold">Grow EDU | Tutor Portal</h1>
+        <a href="/login" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600 transition">ออกจากระบบ</a>
+    </nav>
+
+    <div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg border-t-4 border-indigo-600">
+        <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">สร้างคอร์สเรียนใหม่</h2>
+        
+        <form class="space-y-5">
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">1. เลือกชั้นที่สอน</label>
+                <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 bg-white">
+                    <option>ประถมศึกษา</option>
+                    <option>มัธยมต้น</option>
+                    <option>มัธยมปลาย</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-gray-700 font-medium mb-2">2. เลือกวิชาที่สอน</label>
+                <input type="text" placeholder="เช่น คณิตศาสตร์, ภาษาไทย..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600">
+            </div>
+
+            <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                <label class="block text-indigo-800 font-medium mb-2">3. ลิงก์วิดีโอ (จาก Google Drive)</label>
+                <input type="text" placeholder="วางลิงก์ไฟล์วิดีโอที่นี่..." class="w-full px-4 py-2 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-600">
+            </div>
+
+            <button type="button" class="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition font-bold text-lg" onclick="alert('อัปโหลดคอร์สสำเร็จ! (จำลอง)')">
+                อัปโหลดคอร์ส
+            </button>
+        </form>
+    </div>
+</body>
+</html>
