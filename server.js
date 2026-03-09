@@ -26,6 +26,22 @@ app.get('/', (req, res) => {
 // หน้าลืมรหัสผ่าน
 app.get('/forgot-password', (req, res) => res.render('forgot-password'));
 app.get('/register', (req, res) => res.render('register'));
+
+// --- API ตรวจสอบข้อมูลแบบ Real-time (MinnyStore Style) ---
+app.post('/api/check-username', async (req, res) => {
+    const { username } = req.body;
+    const user = await User.findOne({ username });
+    if (user) return res.json({ available: false, message: 'ชื่อนี้มีคนใช้แล้ว' });
+    res.json({ available: true });
+});
+
+app.post('/api/check-email', async (req, res) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (user) return res.json({ available: false, message: 'อีเมลนี้ถูกใช้สมัครไปแล้ว' });
+    res.json({ available: true });
+});
+
 // --- 1. ขอ OTP สำหรับสมัครสมาชิก ---
 app.post('/request-register-otp', async (req, res) => {
     const { username, email } = req.body;
