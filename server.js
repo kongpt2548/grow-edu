@@ -13,12 +13,97 @@ const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKLxM7TKxmCw
 // ตัวแปรเก็บ OTP ชั่วคราว (เลียนแบบ MinnyStore)
 let otpStore = {};
 const User = require('./models/User'); // ดึง Model มาใช้
+const Video = require('./models/Video');
+
+// 1. หน้าเลือกชั้น
+app.get('/courses', (req, res) => res.render('course-selection'));
+
+// 2. หน้าเลือกบทเรียนตามชั้น
+app.get('/courses/:level', (req, res) => {
+    res.render('course-topics', { level: req.params.level });
+});
+
+// 3. หน้าดึงคลิปจาก DB (แสดงเฉพาะสถานะ approved)
+app.get('/video-list/:level/:term/:subject', async (req, res) => {
+    try {
+        const { level, subject } = req.params;
+        // ค้นหาวิดีโอที่ตรงเงื่อนไข และต้องได้รับการอนุมัติ (approved) เท่านั้น
+        const videos = await Video.find({ 
+            level: level, 
+            subject: subject, 
+            status: 'approved' 
+        }).populate('tutorId'); // ดึงชื่อติวเตอร์มาด้วย
+
+        res.render('video-list', { 
+            videos, 
+            level, 
+            subject 
+        });
+    } catch (err) {
+        res.status(500).send("Error fetching videos");
+    }
+});
+
+// เพิ่ม Route หน้าอัปโหลด
+app.get('/tutor/upload', (req, res) => res.render('tutor_upload'));
+
+// ระบบรับการอัปโหลด (ส่งไปรอตรวจสอบ)
+app.post('/tutor/upload', async (req, res) => {
+    try {
+        const { title, subject, topic, level, driveFileId, price } = req.body;
+        const newVideo = new Video({
+            tutorId: req.session.userId, // สมมติว่ามีระบบ Session
+            title, subject, topic, level, driveFileId, price,
+            status: 'pending' // เริ่มต้นเป็นรอตรวจสอบ
+        });
+        await newVideo.save();
+        res.send('<script>alert("ส่งคลิปตรวจสอบแล้ว!"); window.location="/tutor";</script>');
+    } catch (err) {
+        res.status(500).send("Error uploading");
+    }
+});
+
+// หน้าสรุปรายได้ติวเตอร์
+app.get('/tutor/income', async (req, res) => {
+    const user = await User.findById(req.session.userId);
+    const videos = await Video.find({ tutorId: req.session.userId });
+    res.render('tutor_report', { user, videos });
+});
+
+// ตัวอย่างระบบคำนวณเงิน (จะรันเมื่อมีนักเรียนมาซื้อคลิป)
+// revenue = price * 0.6; // ติวเตอร์ได้ 60%
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
+// หน้า Admin Approval
+app.get('/admin/approval', async (req, res) => {
+    try {
+        // ดึงคลิปที่สถานะเป็น pending มาตรวจสอบ
+        const pendingVideos = await Video.find({ status: 'pending' }).populate('tutorId');
+        
+        // คำนวณรายได้ทั้งหมดของระบบ (สมมติว่าเอามาจากยอดรวมของคลิปที่มีคนดู/ซื้อไปแล้ว)
+        // ในระบบจริง คุณอาจต้องมีคอลเลกชัน Transaction เพื่อเก็บยอดซื้อ
+        const allVideos = await Video.find({ status: 'approved' });
+        const totalRevenue = allVideos.reduce((sum, v) => sum + (v.views * v.price), 0);
 
+        res.render('admin_approval', { pendingVideos, totalRevenue });
+    } catch (err) {
+        res.status(500).send("Admin Error");
+    }
+});
+
+// API สำหรับเปลี่ยนสถานะวิดีโอ
+app.post('/admin/update-video-status', async (req, res) => {
+    const { videoId, status } = req.body;
+    try {
+        await Video.findByIdAndUpdate(videoId, { status: status });
+        res.json({ message: `อัปเดตสถานะเป็น ${status} เรียบร้อยแล้ว` });
+    } catch (err) {
+        res.status(500).json({ message: "เกิดข้อผิดพลาด" });
+    }
+});
 // ================= ROUTE หน้าเว็บ =================
 // หน้าแรกของเว็บ (Landing Page)
 app.get('/', (req, res) => {

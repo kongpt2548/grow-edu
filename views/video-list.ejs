@@ -1,0 +1,28 @@
+<div class="max-w-6xl mx-auto p-6">
+    <h2 class="text-2xl font-bold mb-8">บทเรียน: <%= subject %> (<%= level %>)</h2>
+
+    <% if (videos.length === 0) { %>
+        <div class="text-center py-20 bg-white rounded-3xl shadow-inner border-2 border-dashed">
+            <div class="text-6xl mb-4">📭</div>
+            <h3 class="text-xl font-bold text-gray-400">ขณะนี้ยังไม่มีเนื้อหาในบทเรียนนี้</h3>
+            <p class="text-gray-500">ติวเตอร์กำลังเร่งผลิตเนื้อหาคุณภาพเพื่อคุณ รอติดตามเร็วๆ นี้นะคะ!</p>
+            <a href="/courses" class="mt-6 inline-block text-[#1A73E8] font-bold underline">กลับไปดูวิชาอื่น</a>
+        </div>
+    <% } else { %>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <% videos.forEach(video => { %>
+                <div class="bg-white rounded-2xl shadow-sm border p-4">
+                    <div class="aspect-video bg-black rounded-lg mb-4 flex items-center justify-center text-white">
+                        <span>Preview Video</span>
+                    </div>
+                    <h4 class="font-bold text-lg"><%= video.title %></h4>
+                    <p class="text-sm text-gray-500">ติวเตอร์: <%= video.tutorId.username %></p>
+                    <div class="mt-4 flex justify-between items-center">
+                        <span class="text-green-600 font-bold">฿<%= video.price %></span>
+                        <button class="bg-[#1A73E8] text-white px-4 py-2 rounded-lg text-sm">ซื้อเพื่อเข้าชม</button>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    <% } %>
+</div>

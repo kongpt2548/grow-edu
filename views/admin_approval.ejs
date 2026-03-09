@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - Grow EDU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="flex">
+        <div class="w-64 bg-slate-900 h-screen sticky top-0 text-white p-6">
+            <h1 class="text-2xl font-bold text-blue-400 mb-10">Grow EDU Admin</h1>
+            <nav class="space-y-4">
+                <a href="#" class="block p-3 bg-blue-600 rounded-lg">ตรวจสอบวิดีโอ</a>
+                <a href="#" class="block p-3 hover:bg-slate-800 rounded-lg">จัดการผู้ใช้</a>
+            </nav>
+        </div>
+
+        <main class="flex-1 p-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border-t-4 border-green-500">
+                    <p class="text-gray-500 text-sm">รายได้รวมทั้งหมด (Gross Revenue)</p>
+                    <h2 class="text-4xl font-bold text-gray-800">฿ <%= totalRevenue.toLocaleString() %></h2>
+                </div>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border-t-4 border-blue-500">
+                    <p class="text-gray-500 text-sm">กำไรสุทธิ (ส่วนแบ่ง 40%)</p>
+                    <h2 class="text-4xl font-bold text-blue-600">฿ <%= (totalRevenue * 0.4).toLocaleString() %></h2>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-bold mb-6">รายการคลิปที่รอการตรวจสอบ (Pending)</h3>
+            
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="p-4">ติวเตอร์</th>
+                            <th class="p-4">ชื่อคลิป/ระดับชั้น</th>
+                            <th class="p-4">ลิงก์ Drive</th>
+                            <th class="p-4">ราคา</th>
+                            <th class="p-4 text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (pendingVideos.length === 0) { %>
+                            <tr><td colspan="5" class="p-10 text-center text-gray-400">ไม่มีคลิปค้างตรวจสอบ</td></tr>
+                        <% } %>
+                        <% pendingVideos.forEach(video => { %>
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-4 font-medium"><%= video.tutorId.username %></td>
+                            <td class="p-4">
+                                <p class="font-bold"><%= video.title %></p>
+                                <p class="text-xs text-gray-500"><%= video.level %> | <%= video.subject %></p>
+                            </td>
+                            <td class="p-4">
+                                <a href="https://drive.google.com/file/d/<%= video.driveFileId %>/view" target="_blank" class="text-blue-600 underline text-sm">เปิดดูคลิป 🔗</a>
+                            </td>
+                            <td class="p-4 font-bold text-green-600">฿<%= video.price %></td>
+                            <td class="p-4 text-center space-x-2">
+                                <button onclick="updateStatus('<%= video._id %>', 'approved')" class="bg-green-500 text-white px-4 py-1 rounded-full text-sm hover:bg-green-600">อนุมัติ</button>
+                                <button onclick="updateStatus('<%= video._id %>', 'rejected')" class="bg-red-500 text-white px-4 py-1 rounded-full text-sm hover:bg-red-600">ปฏิเสธ</button>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function updateStatus(videoId, status) {
+            Swal.fire({
+                title: 'ยืนยันการทำรายการ?',
+                text: "คลิปนี้จะถูก " + (status === 'approved' ? 'แสดงผล' : 'ตีกลับ'),
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/admin/update-video-status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ videoId, status })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        Swal.fire('สำเร็จ!', data.message, 'success').then(() => location.reload());
+                    });
+                }
+            })
+        }
+    </script>
+</body>
+</html>

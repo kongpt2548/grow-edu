@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>อัปโหลดบทเรียน - Grow EDU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow">
+        <h2 class="text-2xl font-bold mb-6">📤 อัปโหลดวิดีโอการสอนใหม่</h2>
+        <form action="/tutor/upload" method="POST" class="space-y-4">
+            <div>
+                <label class="block mb-1">ชื่อคลิปวิดีโอ</label>
+                <input type="text" name="title" required class="w-full border p-2 rounded">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block mb-1">วิชา</label>
+                    <select name="subject" class="w-full border p-2 rounded">
+                        <option value="math">คณิตศาสตร์</option>
+                        <option value="science">วิทยาศาสตร์</option>
+                        <option value="english">ภาษาอังกฤษ</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1">ระดับชั้น</label>
+                    <select name="level" class="w-full border p-2 rounded">
+                        <option value="p1-p6">ประถมศึกษา</option>
+                        <option value="m1-m3">มัธยมต้น</option>
+                        <option value="m4-m6">มัธยมปลาย</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block mb-1">Google Drive File ID (ลิงก์คลิป)</label>
+                <input type="text" name="driveFileId" placeholder="ใส่ ID จาก Google Drive" required class="w-full border p-2 rounded">
+            </div>
+            <div>
+                <label class="block mb-1">ราคาคอร์ส (บาท)</label>
+                <input type="number" name="price" required class="w-full border p-2 rounded">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">ส่งให้ทีมงานตรวจสอบ</button>
+        </form>
+    </div>
+</body>
+</html>

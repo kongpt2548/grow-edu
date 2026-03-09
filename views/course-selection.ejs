@@ -1,0 +1,12 @@
+<div class="max-w-4xl mx-auto p-8 text-center">
+    <h1 class="text-3xl font-bold mb-8 text-[#1A73E8]">เลือกระดับชั้นที่ต้องการเรียน</h1>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <% ['ประถมศึกษา', 'มัธยมต้น', 'มัธยมปลาย'].forEach(level => { %>
+            <a href="/courses/<%= level %>" class="p-10 bg-white rounded-3xl shadow-lg border-2 border-transparent hover:border-[#1A73E8] hover:scale-105 transition-all group">
+                <div class="text-5xl mb-4 group-hover:bounce">📚</div>
+                <h2 class="text-xl font-bold text-gray-800"><%= level %></h2>
+                <p class="text-sm text-gray-500 mt-2">คลิกเพื่อดูบทเรียน</p>
+            </a>
+        <% }) %>
+    </div>
+</div>
