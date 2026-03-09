@@ -10,7 +10,10 @@ app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
 // ================= ROUTE หน้าเว็บ =================
-
+//หน้าแรกสุดเด้งไปหน้าสมัครสมาชิกทันที
+app.get('/', (req, res) => {
+    res.redirect('/register');
+});
 app.get('/register', (req, res) => res.render('register'));
 
 // ระบบสมัครสมาชิก (บันทึกลง DB จริง)
