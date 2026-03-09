@@ -47,24 +47,23 @@ app.get('/courses/:level/:subject', async (req, res) => {
     }
 });
 
-// 4. หน้า Dashboard นักเรียน (ประวัติการซื้อ / คอร์สของฉัน)
+// ================= ROUTE นักเรียน =================
 app.get('/student', async (req, res) => {
-    // ต้องล็อกอินก่อน
     if (!req.session.userId) return res.redirect('/login');
-    
     try {
-        // ดึงออเดอร์ที่ "แอดมินอนุมัติสลิปแล้ว" มาแสดง
-        const myOrders = await Order.find({ 
-            studentId: req.session.userId, 
-            status: 'approved' 
-        }).populate({
-            path: 'videoId',
-            populate: { path: 'tutorId' } // ดึงชื่อติวเตอร์มาด้วย
-        });
+        // 1. ดึงออเดอร์ "ทั้งหมด" ของนักเรียนคนนี้ (เรียงจากใหม่ไปเก่า)
+        const allOrders = await Order.find({ studentId: req.session.userId })
+            .populate({ path: 'videoId', populate: { path: 'tutorId' } })
+            .sort({ createdAt: -1 });
 
-        res.render('student_dashboard', { orders: myOrders });
-    } catch (err) {
-        res.status(500).send("Error loading dashboard");
+        // 2. กรองเฉพาะอันที่ "อนุมัติแล้ว" เพื่อเอาไปโชว์ในกล่องเข้าเรียน
+        const activeCourses = allOrders.filter(order => order.status === 'approved');
+
+        // ส่งข้อมูลทั้ง 2 ก้อนไปที่หน้าเว็บ
+        res.render('student_dashboard', { activeCourses, allOrders });
+    } catch (err) { 
+        console.error(err);
+        res.status(500).send("Error loading dashboard"); 
     }
 });
 
