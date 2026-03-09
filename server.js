@@ -160,7 +160,8 @@ app.post('/login', async (req, res) => {
 
 app.get('/student', (req, res) => res.render('student_dashboard'));
 app.get('/tutor', (req, res) => res.render('tutor_dashboard'));
-
+app.get('/courses', (req, res) => res.render('courses'));
+app.get('/tutors', (req, res) => res.render('tutors'));
 // =======================================================
 
 // เชื่อมต่อ MongoDB
