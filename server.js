@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios'); 
-const SibApiV3Sdk = require('sib-api-v3-sdk'); 
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs'); // ตัวเข้ารหัสผ่าน
 const SibApiV3Sdk = require('sib-api-v3-sdk');
@@ -27,73 +26,6 @@ app.get('/', (req, res) => {
 // หน้าลืมรหัสผ่าน
 app.get('/forgot-password', (req, res) => res.render('forgot-password'));
 app.get('/register', (req, res) => res.render('register'));
-// --- 1. ระบบเช็คชื่อ/อีเมลซ้ำ และส่ง OTP ---
-app.post('/send-otp', async (req, res) => {
-    const { username, email } = req.body;
-    try {
-        // เช็คชื่อผู้ใช้ซ้ำ
-        const existingUser = await User.findOne({ username });
-        if (existingUser) return res.status(400).json({ message: 'ชื่อผู้ใช้นี้มีคนใช้แล้ว' });
-
-        // เช็คอีเมลซ้ำ
-        const existingEmail = await User.findOne({ email });
-        if (existingEmail) return res.status(400).json({ message: 'อีเมลนี้ถูกใช้สมัครไปแล้ว' });
-
-        // สร้างรหัส OTP 6 หลัก
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        otpStore[email] = { otp, expire: Date.now() + 5 * 60000 }; // เก็บไว้ 5 นาที
-
-        // ส่งอีเมลด้วย Brevo
-        let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-        sendSmtpEmail.subject = "รหัสยืนยัน (OTP) - Grow EDU";
-        sendSmtpEmail.htmlContent = `<html><body style="font-family:sans-serif;">
-            <h2 style="color:#1A73E8;">ยืนยันตัวตน Grow EDU</h2>
-            <p>รหัส OTP ของคุณคือ: <b style="font-size:24px; color:black;">${otp}</b></p>
-            <p>รหัสนี้จะหมดอายุภายใน 5 นาที</p>
-        </body></html>`;
-        sendSmtpEmail.sender = { "name": "Grow EDU", "email": "noreply@growedu.com" };
-        sendSmtpEmail.to = [{ "email": email }];
-
-        await brevoApi.sendTransacEmail(sendSmtpEmail);
-        res.json({ message: 'ส่ง OTP เรียบร้อย' });
-    } catch (err) {
-        res.status(500).json({ message: 'เกิดข้อผิดพลาดในการส่งเมล' });
-    }
-});
-
-// --- 2. ระบบ Reset Password (ลืมรหัสผ่าน) ---
-app.post('/forgot-password-otp', async (req, res) => {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'ไม่พบอีเมลนี้ในระบบ' });
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    otpStore[email] = { otp, expire: Date.now() + 5 * 60000 };
-
-    let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-    sendSmtpEmail.subject = "กู้คืนรหัสผ่าน - Grow EDU";
-    sendSmtpEmail.htmlContent = `<h3>รหัส OTP สำหรับตั้งรหัสผ่านใหม่คือ: ${otp}</h3>`;
-    sendSmtpEmail.sender = { "name": "Grow EDU", "email": "support@growedu.com" };
-    sendSmtpEmail.to = [{ "email": email }];
-
-    await brevoApi.sendTransacEmail(sendSmtpEmail);
-    res.json({ message: 'ส่งรหัสเข้าเมลแล้ว' });
-});
-
-app.post('/reset-password', async (req, res) => {
-    const { email, otp, newPassword } = req.body;
-    const record = otpStore[email];
-
-    if (!record || record.otp !== otp || Date.now() > record.expire) {
-        return res.status(400).json({ message: 'OTP ไม่ถูกต้องหรือหมดอายุ' });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await User.findOneAndUpdate({ email }, { password: hashedPassword });
-    delete otpStore[email];
-    res.json({ message: 'เปลี่ยนรหัสผ่านใหม่สำเร็จ!' });
-});
-
 // --- 1. ขอ OTP สำหรับสมัครสมาชิก ---
 app.post('/request-register-otp', async (req, res) => {
     const { username, email } = req.body;
@@ -116,7 +48,7 @@ app.post('/request-register-otp', async (req, res) => {
         sendSmtpEmail.to = [{ "email": email }];
 
         await brevoApi.sendTransacEmail(sendSmtpEmail);
-        res.json({ refCode }); // ส่ง refCode กลับไปโชว์ที่หน้าเว็บ
+        res.status(200).json({ refCode }); 
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'ส่งอีเมลไม่สำเร็จ กรุณาลองใหม่' });
@@ -125,7 +57,6 @@ app.post('/request-register-otp', async (req, res) => {
 
 // --- 2. ยืนยัน OTP และบันทึกบัญชีใหม่ ---
 app.post('/register', async (req, res) => {
-    // ตัด pin ออกตามที่คุณสั่ง แต่รับค่ามาเผื่อหน้าเว็บส่งมาจะได้ไม่พัง
     const { username, email, password, role, otp } = req.body; 
     const record = otpStore[email];
 
@@ -135,10 +66,9 @@ app.post('/register', async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        // บันทึก email ลง DB ด้วย (อย่าลืมเพิ่มฟิลด์ email ใน models/User.js นะครับ)
         const newUser = new User({ username, email, password: hashedPassword, role: role || 'student' });
         await newUser.save();
-        delete otpStore[email]; // ลบ OTP ทิ้งหลังใช้เสร็จ
+        delete otpStore[email];
         
         res.status(200).json({ message: 'สมัครสมาชิกสำเร็จ' });
     } catch (err) {
@@ -187,7 +117,6 @@ app.post('/reset-password', async (req, res) => {
         res.status(500).json({ message: 'เกิดข้อผิดพลาดในระบบ' });
     }
 });
-
 app.get('/login', (req, res) => res.render('login'));
 
 // ระบบเข้าสู่ระบบ (เช็คจาก DB จริง)
@@ -195,8 +124,8 @@ app.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         
-        // หาชื่อผู้ใช้ในฐานข้อมูล
-        const user = await User.findOne({ username });
+        // หาชื่อผู้ใช้ในฐานข้อมูล (รองรับทั้ง username และ email)
+        const user = await User.findOne({ $or: [{ username: username }, { email: username }] });
         if (!user) return res.send('<script>alert("ไม่พบชื่อผู้ใช้นี้!"); window.location="/login";</script>');
 
         // เช็ครหัสผ่าน
