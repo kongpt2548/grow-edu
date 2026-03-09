@@ -343,12 +343,11 @@ app.post('/reset-password', async (req, res) => {
 });
 app.get('/login', (req, res) => res.render('login'));
 
-// ระบบเข้าสู่ระบบ (เช็คจาก DB จริง)
+// ระบบเข้าสู่ระบบ (แบบ API รองรับ SweetAlert)
 app.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         
-        // ค้นหาแบบไม่สนตัวพิมพ์เล็ก/ใหญ่ (Case Insensitive)
         const user = await User.findOne({ 
             $or: [
                 { username: { $regex: '^' + username + '$', $options: 'i' } }, 
@@ -356,28 +355,25 @@ app.post('/login', async (req, res) => {
             ] 
         });
         
-        if (!user) return res.send('<script>alert("ไม่พบชื่อผู้ใช้นี้!"); window.location="/login";</script>');
+        // 🌟 เปลี่ยนมาส่ง JSON กลับไปบอกหน้าเว็บว่ามี Error อะไร
+        if (!user) return res.status(400).json({ success: false, message: 'ไม่พบชื่อผู้ใช้นี้ในระบบ!' });
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.send('<script>alert("รหัสผ่านผิด!"); window.location="/login";</script>');
+        if (!isMatch) return res.status(400).json({ success: false, message: 'รหัสผ่านไม่ถูกต้อง!' });
 
-        // สร้าง Session เพื่อยืนยันตัวตน (ฝังบัตร)
         req.session.userId = user._id;
-        req.session.username = user.username.toLowerCase(); // ปรับเป็นพิมพ์เล็กเพื่อเช็คสิทธิ์ง่ายๆ
+        req.session.username = user.username.toLowerCase();
 
-        // ตรวจสอบ Master Admin
-        if (req.session.username === 'admin') {
-            return res.redirect('/admin/approval');
-        }
+        // กำหนดทางไปต่อ
+        let redirectUrl = '/student';
+        if (req.session.username === 'admin') redirectUrl = '/admin/approval';
+        else if (user.role === 'tutor') redirectUrl = '/tutor';
 
-        if (user.role === 'tutor') {
-            res.redirect('/tutor');
-        } else {
-            res.redirect('/student');
-        }
+        // 🌟 ส่ง JSON กลับไปบอกว่าล็อกอินสำเร็จ พร้อมเป้าหมายที่จะให้เด้งไป
+        res.json({ success: true, redirect: redirectUrl });
     } catch (err) {
         console.error(err);
-        res.send('เกิดข้อผิดพลาด');
+        res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดของระบบ' });
     }
 });
 

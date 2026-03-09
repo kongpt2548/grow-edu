@@ -5,34 +5,116 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>เข้าสู่ระบบ - Grow EDU</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>body { font-family: 'Kanit', sans-serif; }</style>
 </head>
-<body class="bg-[#E1F5FE] flex items-center justify-center min-h-screen font-sans">
-    <div class="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full border-t-4 border-[#1A73E8]">
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-[#1A73E8]">เข้าสู่ระบบ</h1>
-            <p class="text-gray-500 mt-2">ยินดีต้อนรับกลับสู่ Grow EDU</p>
+<body class="bg-[#E1F5FE] flex items-center justify-center min-h-screen font-sans selection:bg-[#1A73E8] selection:text-white p-4">
+    
+    <div class="bg-white p-8 md:p-10 rounded-3xl shadow-xl max-w-md w-full border-t-4 border-[#1A73E8]">
+        
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-[#1A73E8] text-3xl shadow-inner">
+                <i class="fa-solid fa-right-to-bracket"></i>
+            </div>
+            <h1 class="text-3xl font-black text-gray-800">เข้าสู่ระบบ</h1>
+            <p class="text-gray-500 mt-2 font-medium">ยินดีต้อนรับกลับสู่ Grow EDU</p>
         </div>
 
-        <form action="/login" method="POST" class="space-y-4">
+        <form id="loginForm" onsubmit="submitLogin(event)" class="space-y-5">
             <div>
-                <label class="block text-gray-700 font-medium mb-1">ชื่อผู้ใช้</label>
-                <input type="text" name="username" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A73E8]">
+                <label class="block text-gray-700 font-bold mb-2">ชื่อผู้ใช้ หรือ อีเมล</label>
+                <div class="relative group">
+                    <i class="fa-solid fa-user absolute left-4 top-3.5 text-gray-400 group-focus-within:text-[#1A73E8] transition"></i>
+                    <input type="text" name="username" required class="w-full bg-gray-50 py-3 pl-11 pr-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#1A73E8] transition font-medium" placeholder="Username หรือ Email">
+                </div>
             </div>
             <div>
-                <label class="block text-gray-700 font-medium mb-1">รหัสผ่าน</label>
-                <input type="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1A73E8]">
-                <div class="text-right mt-2">
+                <label class="block text-gray-700 font-bold mb-2">รหัสผ่าน</label>
+                <div class="relative group">
+                    <i class="fa-solid fa-lock absolute left-4 top-3.5 text-gray-400 group-focus-within:text-[#1A73E8] transition"></i>
+                    <input type="password" id="password" name="password" required class="w-full bg-gray-50 py-3 pl-11 pr-12 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#1A73E8] transition font-medium" placeholder="••••••••">
+                    <i class="fa-solid fa-eye-slash absolute right-4 top-3.5 text-gray-400 cursor-pointer hover:text-[#1A73E8] transition" onclick="togglePwd()"></i>
+                </div>
+                <div class="text-right mt-3">
                     <a href="/forgot-password" class="text-sm text-[#1A73E8] hover:underline font-bold">ลืมรหัสผ่านใช่ไหม?</a>
                 </div>
             </div>
             
-            <button type="submit" class="w-full bg-[#1A73E8] text-white py-2 rounded-lg hover:bg-blue-700 transition duration-300 font-bold mt-6">
-                เข้าสู่ระบบ
+            <button type="submit" id="btn-login" class="w-full bg-[#1A73E8] text-white py-4 rounded-xl hover:bg-blue-700 hover:shadow-lg transition transform hover:-translate-y-1 font-bold text-lg mt-6 flex items-center justify-center gap-2 shadow-md">
+                เข้าสู่ระบบ <i class="fa-solid fa-arrow-right"></i>
             </button>
         </form>
-        <p class="text-center mt-4 text-sm text-gray-600">
-            ยังไม่มีบัญชี? <a href="/register" class="text-[#1A73E8] hover:underline font-bold">สมัครสมาชิก</a>
+        
+        <p class="text-center mt-8 text-gray-600 font-medium border-t border-gray-100 pt-6">
+            ยังไม่มีบัญชี? <a href="/register" class="text-[#1A73E8] hover:underline font-bold ml-1 text-lg">สมัครสมาชิก</a>
         </p>
     </div>
+
+    <script>
+        // ฟังก์ชัน เปิด/ปิด ตาดูรหัสผ่าน
+        function togglePwd() {
+            const pwd = document.getElementById('password');
+            const icon = document.querySelector('.fa-eye-slash') || document.querySelector('.fa-eye');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+                icon.classList.add('text-[#1A73E8]');
+            } else {
+                pwd.type = 'password';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+                icon.classList.remove('text-[#1A73E8]');
+            }
+        }
+
+        // ฟังก์ชันยิงข้อมูลไปเช็ค
+        function submitLogin(e) {
+            e.preventDefault(); // ไม่ให้หน้าเว็บรีเฟรช
+            const btn = document.getElementById('btn-login');
+            const form = document.getElementById('loginForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // โชว์โหลดรอที่ปุ่ม
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> กำลังเข้าสู่ระบบ...';
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    // ถ้ารหัสถูก ให้พุ่งไปหน้า Dashboard ทันที
+                    window.location.href = result.redirect;
+                } else {
+                    // ถ้ารหัสผิด เรียกป๊อปอัป SweetAlert สีแดง
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เข้าสู่ระบบไม่สำเร็จ',
+                        text: result.message,
+                        confirmButtonColor: '#1A73E8',
+                        confirmButtonText: 'ตกลง',
+                        customClass: { confirmButton: 'rounded-xl px-6 py-2' }
+                    });
+                    resetButton(btn);
+                }
+            })
+            .catch(err => {
+                Swal.fire('ผิดพลาด', 'ระบบขัดข้อง กรุณาลองใหม่', 'error');
+                resetButton(btn);
+            });
+        }
+
+        function resetButton(btn) {
+            btn.innerHTML = 'เข้าสู่ระบบ <i class="fa-solid fa-arrow-right"></i>';
+            btn.disabled = false;
+            btn.classList.remove('opacity-70', 'cursor-not-allowed');
+        }
+    </script>
 </body>
 </html>
