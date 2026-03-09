@@ -60,7 +60,7 @@ app.post('/request-register-otp', async (req, res) => {
         let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.subject = "รหัสยืนยันการสมัครสมาชิก Grow EDU";
         sendSmtpEmail.htmlContent = `<h2>รหัส OTP ของคุณคือ: <b style="color:#1A73E8;">${otp}</b></h2><p>Ref Code: ${refCode}</p>`;
-        sendSmtpEmail.sender = { "name": "Grow EDU", "email": "noreply@growedu.com" };
+        sendSmtpEmail.sender = { "name": "Grow EDU", "email": "growedu.official.th@gmail.com" };
         sendSmtpEmail.to = [{ "email": email }];
 
         await brevoApi.sendTransacEmail(sendSmtpEmail);
@@ -105,7 +105,7 @@ app.post('/forgot-password', async (req, res) => {
         let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.subject = "คำขอกู้คืนรหัสผ่าน Grow EDU";
         sendSmtpEmail.htmlContent = `<h2>รหัส OTP สำหรับตั้งรหัสผ่านใหม่คือ: <b style="color:#1A73E8;">${otp}</b></h2>`;
-        sendSmtpEmail.sender = { "name": "Grow EDU", "email": "support@growedu.com" };
+        sendSmtpEmail.sender = { "name": "Grow EDU", "email": "growedu.official.th@gmail.com" };
         sendSmtpEmail.to = [{ "email": email }];
 
         await brevoApi.sendTransacEmail(sendSmtpEmail);
