@@ -64,7 +64,6 @@ app.post('/request-register-otp', async (req, res) => {
             subject: "รหัสยืนยันการสมัครสมาชิก Grow EDU",
             html: `<h2>รหัส OTP ของคุณคือ: <b style="color:#1A73E8;">${otp}</b></h2><p>Ref Code: ${refCode}</p>`
         });
-        await transporter.sendMail(mailOptions);
         res.status(200).json({ refCode }); 
     } catch (err) {
         console.error(err);
@@ -108,7 +107,6 @@ app.post('/forgot-password', async (req, res) => {
             subject: "คำขอกู้คืนรหัสผ่าน Grow EDU",
             html: `<h2>รหัส OTP สำหรับตั้งรหัสผ่านใหม่คือ: <b style="color:#1A73E8;">${otp}</b></h2>`
         });
-        await transporter.sendMail(mailOptions);
         res.status(200).json({ message: 'ส่งรหัส OTP เรียบร้อย' });
     } catch (err) {
         res.status(500).json({ message: 'เกิดข้อผิดพลาดในการส่งอีเมล' });
