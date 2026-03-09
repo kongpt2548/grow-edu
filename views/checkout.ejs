@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ชำระค่าบริการ - Grow EDU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-50 p-8 font-sans">
+    <div class="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-lg text-center border-t-4 border-[#1A73E8]">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">ชำระค่าบริการ</h1>
+        <p class="text-gray-500 mb-6">คอร์ส: <%= video.title %></p>
+
+        <div class="bg-gray-100 p-4 rounded-2xl inline-block mb-4 shadow-inner">
+            <img src="/api/qr/<%= video.price %>" class="w-48 h-48 mx-auto" alt="QR Code">
+        </div>
+        
+        <p class="text-sm text-gray-500">สแกนเพื่อชำระเงินจำนวน</p>
+        <h2 class="text-3xl font-black text-[#1A73E8] mb-6">฿<%= video.price %></h2>
+
+        <div class="text-left mb-6">
+            <label class="block text-sm font-bold mb-2">แนบสลิปโอนเงิน (ขนาดไม่เกิน 2MB)</label>
+            <input type="file" id="slip-file" accept="image/*" class="w-full border-2 p-2 rounded-xl text-sm focus:outline-none focus:border-[#1A73E8]">
+        </div>
+
+        <button onclick="submitPayment()" id="btn-submit" class="w-full bg-[#1A73E8] text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-md">
+            ยืนยันการชำระเงิน
+        </button>
+        <a href="/courses" class="block mt-4 text-sm text-gray-400 hover:underline">ยกเลิกและกลับไปหน้าค้นหา</a>
+    </div>
+
+    <script>
+        function submitPayment() {
+            const fileInput = document.getElementById('slip-file').files[0];
+            if (!fileInput) return Swal.fire('แจ้งเตือน', 'กรุณาแนบรูปสลิปโอนเงิน', 'warning');
+
+            // ตรวจสอบขนาดไฟล์ไม่เกิน 2MB แบบเดิม
+            if (fileInput.size > 2 * 1024 * 1024) {
+                return Swal.fire('ไฟล์ใหญ่เกินไป', 'รูปสลิปต้องมีขนาดไม่เกิน 2 MB ครับ', 'warning');
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.innerHTML = 'กำลังส่งข้อมูล...'; btn.disabled = true;
+
+            // แปลงไฟล์ภาพเป็น Base64
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const slipBase64 = e.target.result;
+                
+                fetch('/api/submit-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        videoId: '<%= video._id %>',
+                        amount: Number('<%= video.price %>'),
+                        slipImage: slipBase64
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    Swal.fire('สำเร็จ', data.message, 'success').then(() => {
+                        window.location.href = '/student'; // ส่งกลับหน้า Dashboard นักเรียน
+                    });
+                })
+                .catch(() => Swal.fire('Error', 'เกิดข้อผิดพลาด', 'error'));
+            };
+            reader.readAsDataURL(fileInput);
+        }
+    </script>
+</body>
+</html>
