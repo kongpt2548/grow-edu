@@ -8,7 +8,7 @@ const SibApiV3Sdk = require('sib-api-v3-sdk');
 const client = SibApiV3Sdk.ApiClient.instance;
 client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
 // ใช้ Google Apps Script API แทนเพื่อทะลวงบล็อก Render
-const GOOGLE_SCRIPT_URL = 'วาง_URL_ที่ก๊อปมาตรงนี้';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwE3IlqpAoO_RvqUrcoPV-nEtJQAF-45VlrA4P7OiRSBxGKgNPaW4Zqgf4X-b8Q-oHDkQ/exec';
 
 // ตัวแปรเก็บ OTP ชั่วคราว (เลียนแบบ MinnyStore)
 let otpStore = {};
