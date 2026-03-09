@@ -121,7 +121,7 @@ app.post('/forgot-password', async (req, res) => {
         res.status(500).json({ message: 'เกิดข้อผิดพลาดในการส่งอีเมล' });
     }
 });
-
+// ลองรีเว็ปหน่อย
 // --- 4. ยืนยันเปลี่ยนรหัสผ่านใหม่ ---
 app.post('/reset-password', async (req, res) => {
     const { email, otp, newPassword } = req.body;
