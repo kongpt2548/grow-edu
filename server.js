@@ -104,7 +104,16 @@ app.post('/tutor/upload', async (req, res) => {
     try {
         if (!req.session.userId) return res.status(401).json({ message: "กรุณาเข้าสู่ระบบ" });
         
-        const { title, subject, level, driveFileId, price } = req.body;
+        let { title, subject, level, driveFileId, price } = req.body;
+
+        // 🌟 ดักจับและสกัดเอาแค่ ID (กรณีที่ติวเตอร์วางมาทั้งลิงก์)
+        if (driveFileId.includes('drive.google.com')) {
+            const match = driveFileId.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                driveFileId = match[1]; // เอาแค่รหัส ID มาใช้
+            }
+        }
+        
         const newVideo = new Video({
             tutorId: req.session.userId,
             title, 
