@@ -25,32 +25,46 @@ app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
-// 1. หน้าเลือกชั้น
+// ================= ROUTE ฝั่งนักเรียน (การเรียน) =================
+
+// 1. หน้าเลือกชั้นเรียน
 app.get('/courses', (req, res) => res.render('course-selection'));
 
-// 2. หน้าเลือกบทเรียนตามชั้น
+// 2. หน้าเลือกวิชา (ตามระดับชั้น)
 app.get('/courses/:level', (req, res) => {
     res.render('course-topics', { level: req.params.level });
 });
 
-// 3. หน้าดึงคลิปจาก DB (แสดงเฉพาะสถานะ approved)
-app.get('/video-list/:level/:term/:subject', async (req, res) => {
+// 3. หน้าแสดงรายการคลิปตามวิชา
+app.get('/courses/:level/:subject', async (req, res) => {
     try {
         const { level, subject } = req.params;
-        // ค้นหาวิดีโอที่ตรงเงื่อนไข และต้องได้รับการอนุมัติ (approved) เท่านั้น
-        const videos = await Video.find({ 
-            level: level, 
-            subject: subject, 
-            status: 'approved' 
-        }).populate('tutorId'); // ดึงชื่อติวเตอร์มาด้วย
-
-        res.render('video-list', { 
-            videos, 
-            level, 
-            subject 
-        });
+        // ดึงเฉพาะคลิปที่แอดมินอนุมัติแล้ว (approved) มาโชว์ให้นักเรียนซื้อ
+        const videos = await Video.find({ level, subject, status: 'approved' }).populate('tutorId');
+        res.render('video-list', { level, subject, videos });
     } catch (err) {
         res.status(500).send("Error fetching videos");
+    }
+});
+
+// 4. หน้า Dashboard นักเรียน (ประวัติการซื้อ / คอร์สของฉัน)
+app.get('/student', async (req, res) => {
+    // ต้องล็อกอินก่อน
+    if (!req.session.userId) return res.redirect('/login');
+    
+    try {
+        // ดึงออเดอร์ที่ "แอดมินอนุมัติสลิปแล้ว" มาแสดง
+        const myOrders = await Order.find({ 
+            studentId: req.session.userId, 
+            status: 'approved' 
+        }).populate({
+            path: 'videoId',
+            populate: { path: 'tutorId' } // ดึงชื่อติวเตอร์มาด้วย
+        });
+
+        res.render('student_dashboard', { orders: myOrders });
+    } catch (err) {
+        res.status(500).send("Error loading dashboard");
     }
 });
 
