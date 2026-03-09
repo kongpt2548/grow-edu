@@ -1,8 +1,8 @@
 require('dotenv').config();
 require('dns').setDefaultResultOrder('ipv4first');
+const Order = require('./models/Order'); // ดึงโมเดล Order มาใช้
 const generatePayload = require('promptpay-qr');
 const QRCode = require('qrcode');
-const Order = require('./models/Order'); // ดึงโมเดล Order มาใช้
 const express = require('express');
 const axios = require('axios'); 
 const mongoose = require('mongoose');
@@ -84,61 +84,51 @@ app.get('/tutor/income', async (req, res) => {
 // revenue = price * 0.6; // ติวเตอร์ได้ 60%
 
 // ================= ระบบชำระเงิน (Checkout) =================
-
-// 1. API สร้างรูป QR Code พร้อมเพย์
 app.get('/api/qr/:amount', async (req, res) => {
-  try {
-    const amount = Number(req.params.amount);
-    if (!amount || amount <= 0) return res.status(204).end(); 
-
-    // ⚠️ เปลี่ยนเป็นเบอร์พร้อมเพย์ หรือ เลขบัตร ปชช. ของคุณ
-    const promptpayId = '0980573163'; 
-    
-    const payload = generatePayload(promptpayId, { amount });
-    const buffer = await QRCode.toBuffer(payload, {
-      width: 300,
-      color: { dark: '#000000', light: '#ffffff' }
-    });
-
-    res.set('Content-Type', 'image/png');
-    res.send(buffer);
-  } catch (err) {
-    console.error('QR ERROR:', err.message);
-    res.status(500).send('QR GENERATE ERROR');
-  }
+    try {
+        const amount = Number(req.params.amount);
+        if (!amount || amount <= 0) return res.status(204).end(); 
+        
+        // ⚠️ เปลี่ยนเป็นเบอร์พร้อมเพย์ของคุณตรงนี้
+        const promptpayId = '0800000000'; 
+        
+        const payload = generatePayload(promptpayId, { amount });
+        const buffer = await QRCode.toBuffer(payload, {
+            width: 300,
+            color: { dark: '#000000', light: '#ffffff' }
+        });
+        res.set('Content-Type', 'image/png');
+        res.send(buffer);
+    } catch (err) {
+        res.status(500).send('QR ERROR');
+    }
 });
 
-// 2. หน้าเว็บแสดงข้อมูลก่อนจ่ายเงิน
 app.get('/checkout/:videoId', async (req, res) => {
     try {
         const video = await Video.findById(req.params.videoId).populate('tutorId');
         res.render('checkout', { video });
     } catch (err) {
-        res.status(500).send("ไม่พบคอร์สเรียน");
+        res.status(500).send("ไม่พบคอร์ส");
     }
 });
 
-// 3. API รับข้อมูลสลิปที่แนบมา (สถานะ Pending)
 app.post('/api/submit-payment', async (req, res) => {
     try {
         const { videoId, amount, slipImage } = req.body;
-        const studentId = req.session.userId; // ใช้ session จากตอน login
-
-        if (!studentId) return res.status(401).json({ message: "กรุณาเข้าสู่ระบบก่อน" });
-        if (!slipImage) return res.status(400).json({ message: "กรุณาแนบรูปสลิป" });
+        // ต้องมี req.session.userId จากตอน Login
+        if (!req.session.userId) return res.status(401).json({ message: "กรุณาเข้าสู่ระบบ" });
 
         const newOrder = new Order({
-            studentId,
+            studentId: req.session.userId,
             videoId,
             amount,
-            slipImage, // บันทึกสลิป Base64 ลง DB
-            status: 'pending' // รอแอดมินอนุมัติ
+            slipImage,
+            status: 'pending'
         });
         await newOrder.save();
-
-        res.json({ message: "ส่งสลิปเรียบร้อย รอแอดมินตรวจสอบเพื่อปลดล็อกเนื้อหาครับ" });
+        res.json({ message: "ส่งสลิปเรียบร้อย รอแอดมินตรวจสอบครับ" });
     } catch (err) {
-        console.error(err);
         res.status(500).json({ message: "ระบบขัดข้อง" });
     }
 });
