@@ -15,6 +15,12 @@ let otpStore = {};
 const User = require('./models/User'); // ดึง Model มาใช้
 const Video = require('./models/Video');
 
+const session = require('express-session');
+const app = express();
+app.use(session({ secret: 'growedu_secret', resave: false, saveUninitialized: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.set('view engine', 'ejs');
 // 1. หน้าเลือกชั้น
 app.get('/courses', (req, res) => res.render('course-selection'));
 
@@ -73,10 +79,6 @@ app.get('/tutor/income', async (req, res) => {
 // ตัวอย่างระบบคำนวณเงิน (จะรันเมื่อมีนักเรียนมาซื้อคลิป)
 // revenue = price * 0.6; // ติวเตอร์ได้ 60%
 
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.set('view engine', 'ejs');
 // หน้า Admin Approval
 app.get('/admin/approval', async (req, res) => {
     try {
@@ -117,14 +119,14 @@ app.get('/register', (req, res) => res.render('register'));
 // --- API ตรวจสอบข้อมูลแบบ Real-time (MinnyStore Style) ---
 app.post('/api/check-username', async (req, res) => {
     const { username } = req.body;
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username: { $regex: '^' + username + '$', $options: 'i' } });
     if (user) return res.json({ available: false, message: 'ชื่อนี้มีคนใช้แล้ว' });
     res.json({ available: true });
 });
 
 app.post('/api/check-email', async (req, res) => {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: { $regex: '^' + email + '$', $options: 'i' } });
     if (user) return res.json({ available: false, message: 'อีเมลนี้ถูกใช้สมัครไปแล้ว' });
     res.json({ available: true });
 });
@@ -133,10 +135,10 @@ app.post('/api/check-email', async (req, res) => {
 app.post('/request-register-otp', async (req, res) => {
     const { username, email } = req.body;
     try {
-        const existingUser = await User.findOne({ username });
+        const existingUser = await User.findOne({ username: { $regex: '^' + username + '$', $options: 'i' } });
         if (existingUser) return res.status(400).json({ message: 'ชื่อผู้ใช้นี้มีคนใช้แล้ว' });
 
-        const existingEmail = await User.findOne({ email });
+        const existingEmail = await User.findOne({ email: { $regex: '^' + email + '$', $options: 'i' } });
         if (existingEmail) return res.status(400).json({ message: 'อีเมลนี้ถูกใช้สมัครไปแล้ว' });
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -223,15 +225,28 @@ app.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         
-        // หาชื่อผู้ใช้ในฐานข้อมูล (รองรับทั้ง username และ email)
-        const user = await User.findOne({ $or: [{ username: username }, { email: username }] });
+        // ค้นหาแบบไม่สนตัวพิมพ์เล็ก/ใหญ่ (Case Insensitive)
+        const user = await User.findOne({ 
+            $or: [
+                { username: { $regex: '^' + username + '$', $options: 'i' } }, 
+                { email: { $regex: '^' + username + '$', $options: 'i' } }
+            ] 
+        });
+        
         if (!user) return res.send('<script>alert("ไม่พบชื่อผู้ใช้นี้!"); window.location="/login";</script>');
 
-        // เช็ครหัสผ่าน
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.send('<script>alert("รหัสผ่านผิด!"); window.location="/login";</script>');
 
-        // ถ้ารหัสถูก ให้เด้งไปหน้าตาม Role
+        // สร้าง Session เพื่อยืนยันตัวตน (ฝังบัตร)
+        req.session.userId = user._id;
+        req.session.username = user.username.toLowerCase(); // ปรับเป็นพิมพ์เล็กเพื่อเช็คสิทธิ์ง่ายๆ
+
+        // ตรวจสอบ Master Admin
+        if (req.session.username === 'admin') {
+            return res.redirect('/admin/approval');
+        }
+
         if (user.role === 'tutor') {
             res.redirect('/tutor');
         } else {
@@ -248,6 +263,50 @@ app.get('/tutor', (req, res) => res.render('tutor_dashboard'));
 app.get('/courses', (req, res) => res.render('courses'));
 app.get('/tutors', (req, res) => res.render('tutors'));
 // =======================================================
+
+// --- ส่วนของ ADMIN: หน้าอนุมัติคลิป ---
+app.get('/admin/approval', async (req, res) => {
+    // ล็อกประตูกันคนพิมพ์ URL เข้ามาตรงๆ (ต้องเป็น user ที่ชื่อ admin เท่านั้น!)
+    if (req.session.username !== 'admin') {
+        return res.send('<script>alert("ไม่มีสิทธิ์เข้าถึง! เฉพาะ Master Admin เท่านั้น"); window.location="/login";</script>');
+    }
+
+    try {
+        const pendingVideos = await Video.find({ status: 'pending' }).populate('tutorId');
+        const allVideos = await Video.find({ status: 'approved' });
+        const totalRevenue = allVideos.reduce((sum, v) => sum + (v.views * v.price), 0);
+        res.render('admin_approval', { pendingVideos, totalRevenue });
+    } catch (err) {
+        res.status(500).send("Admin Error");
+    }
+});
+
+// --- ส่วนของ ADMIN: กดปุ่ม อนุมัติ/ปฏิเสธ ---
+app.post('/admin/update-video-status', async (req, res) => {
+    const { videoId, status } = req.body;
+    try {
+        await Video.findByIdAndUpdate(videoId, { status: status });
+        res.json({ message: `อัปเดตสถานะเป็น ${status} เรียบร้อยแล้ว` });
+    } catch (err) {
+        res.status(500).json({ message: "Update Error" });
+    }
+});
+
+// --- ส่วนของ TUTOR: รับข้อมูลการอัปโหลดคลิป ---
+app.post('/tutor/upload', async (req, res) => {
+    try {
+        const { title, subject, topic, level, driveFileId, price, tutorId } = req.body;
+        const newVideo = new Video({
+            tutorId, 
+            title, subject, topic, level, driveFileId, price,
+            status: 'pending' // ต้องรอแอดมินอนุมัติก่อน
+        });
+        await newVideo.save();
+        res.send('<script>alert("ส่งคลิปตรวจสอบแล้ว!"); window.location="/tutor";</script>');
+    } catch (err) {
+        res.status(500).send("Upload Error");
+    }
+});
 
 // เชื่อมต่อ MongoDB
 const uri = process.env.MONGO_URI;
