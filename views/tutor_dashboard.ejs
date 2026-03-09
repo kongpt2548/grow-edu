@@ -28,12 +28,12 @@
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
                 <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-                    <p class="text-gray-500 text-sm">นักเรียนทั้งหมด</p>
-                    <p class="text-3xl font-bold">128 คน</p>
+                    <p class="text-gray-500 text-sm">นักเรียนที่ซื้อคอร์ส</p>
+                    <p class="text-3xl font-bold text-gray-800"><%= typeof totalStudents !== 'undefined' ? totalStudents : 0 %> คน</p>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-500">
-                    <p class="text-gray-500 text-sm">รายได้เดือนนี้</p>
-                    <p class="text-3xl font-bold">฿12,400</p>
+                <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                    <p class="text-gray-500 text-sm">รายได้สะสม (60%)</p>
+                    <p class="text-3xl font-bold text-green-600">฿<%= typeof totalRevenue !== 'undefined' ? totalRevenue.toLocaleString() : '0.00' %></p>
                 </div>
             </div>
         </main>

@@ -68,30 +68,74 @@ app.get('/student', async (req, res) => {
     }
 });
 
-// เพิ่ม Route หน้าอัปโหลด
-app.get('/tutor/upload', (req, res) => res.render('tutor_upload'));
+// ================= ROUTE ฝั่งติวเตอร์ =================
 
-// ระบบรับการอัปโหลด (ส่งไปรอตรวจสอบ)
-app.post('/tutor/upload', async (req, res) => {
+// 1. หน้า Dashboard ติวเตอร์ (ดึงข้อมูลจริง)
+app.get('/tutor', async (req, res) => {
+    if (!req.session.userId) return res.redirect('/login');
     try {
-        const { title, subject, topic, level, driveFileId, price } = req.body;
-        const newVideo = new Video({
-            tutorId: req.session.userId, // สมมติว่ามีระบบ Session
-            title, subject, topic, level, driveFileId, price,
-            status: 'pending' // เริ่มต้นเป็นรอตรวจสอบ
-        });
-        await newVideo.save();
-        res.send('<script>alert("ส่งคลิปตรวจสอบแล้ว!"); window.location="/tutor";</script>');
+        const tutorId = req.session.userId;
+        
+        // ดึงคลิปของติวเตอร์คนนี้
+        const myVideos = await Video.find({ tutorId });
+        const videoIds = myVideos.map(v => v._id);
+
+        // ดึงออเดอร์ที่มีคนซื้อคลิปของติวเตอร์คนนี้ และแอดมินอนุมัติสลิปแล้ว
+        const orders = await Order.find({ videoId: { $in: videoIds }, status: 'approved' });
+
+        // คำนวณนักเรียนทั้งหมด (คนซื้อ) และรายได้ (60%)
+        const totalStudents = orders.length;
+        const totalRevenue = orders.reduce((sum, order) => sum + (order.amount * 0.6), 0);
+
+        res.render('tutor_dashboard', { totalStudents, totalRevenue });
     } catch (err) {
-        res.status(500).send("Error uploading");
+        res.status(500).send("Error loading dashboard");
     }
 });
 
-// หน้าสรุปรายได้ติวเตอร์
+// 2. หน้าฟอร์มอัปโหลดคลิป
+app.get('/tutor/upload', (req, res) => {
+    if (!req.session.userId) return res.redirect('/login');
+    res.render('tutor_upload');
+});
+
+// 3. ระบบรับข้อมูลอัปโหลดคลิป (แก้บั๊ก Error แล้ว!)
+app.post('/tutor/upload', async (req, res) => {
+    try {
+        if (!req.session.userId) return res.redirect('/login');
+        
+        const { title, subject, level, driveFileId, price } = req.body;
+        const newVideo = new Video({
+            tutorId: req.session.userId, // ดึง ID จากคนที่ล็อกอินอยู่ (จุดนี้แหละที่ทำพังรอบก่อน)
+            title, 
+            subject, 
+            topic: title,
+            level, 
+            driveFileId, 
+            price,
+            status: 'pending' // ส่งให้แอดมินตรวจ
+        });
+        await newVideo.save();
+        res.send('<script>alert("ส่งคลิปให้แอดมินตรวจสอบเรียบร้อย!"); window.location="/tutor/income";</script>');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Upload Error: ข้อมูลไม่ครบถ้วน");
+    }
+});
+
+// 4. หน้ารายได้และประวัติคลิปของติวเตอร์
 app.get('/tutor/income', async (req, res) => {
-    const user = await User.findById(req.session.userId);
-    const videos = await Video.find({ tutorId: req.session.userId });
-    res.render('tutor_report', { user, videos });
+    if (!req.session.userId) return res.redirect('/login');
+    try {
+        const myVideos = await Video.find({ tutorId: req.session.userId }).sort({ createdAt: -1 });
+        const orders = await Order.find({ videoId: { $in: myVideos.map(v => v._id) }, status: 'approved' });
+        
+        const totalRevenue = orders.reduce((sum, order) => sum + (order.amount * 0.6), 0);
+        // สังเกตว่าเราใช้ render('tutor_report') ให้ตรงกับชื่อไฟล์ที่คุณมี
+        res.render('tutor_report', { videos: myVideos, totalRevenue });
+    } catch (err) {
+        res.status(500).send("Error loading income");
+    }
 });
 
 // ตัวอย่างระบบคำนวณเงิน (จะรันเมื่อมีนักเรียนมาซื้อคลิป)
@@ -327,7 +371,6 @@ app.post('/login', async (req, res) => {
 });
 
 app.get('/student', (req, res) => res.render('student_dashboard'));
-app.get('/tutor', (req, res) => res.render('tutor_dashboard'));
 app.get('/courses', (req, res) => res.render('courses'));
 app.get('/tutors', (req, res) => res.render('tutors'));
 // =======================================================

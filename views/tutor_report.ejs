@@ -1,34 +1,67 @@
-<div class="p-8">
-    <h2 class="text-2xl font-bold mb-6">💰 รายได้และสถิติของคุณ</h2>
-    
-    <div class="bg-green-100 p-6 rounded-xl mb-8">
-        <p class="text-green-800">รายได้สะสมที่ถอนได้ (คิดเป็น 60%)</p>
-        <h1 class="text-4xl font-bold text-green-700">฿ <%= user.balance.toFixed(2) %></h1>
-    </div>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>รายได้และสถิติ - Grow EDU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>body { font-family: 'Kanit', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 flex h-screen">
+    <aside class="w-64 bg-[#1E293B] text-white hidden md:block flex-shrink-0">
+        <div class="p-6 font-bold text-xl text-blue-400 border-b border-gray-700">Grow EDU (Tutor)</div>
+        <nav class="mt-6">
+            <a href="/tutor" class="block py-4 px-6 hover:bg-gray-700 transition">📊 แผงควบคุม</a>
+            <a href="/tutor/upload" class="block py-4 px-6 hover:bg-gray-700 transition">📤 อัปโหลดคลิปสอน</a>
+            <a href="/tutor/income" class="block py-4 px-6 bg-blue-600 border-r-4 border-blue-400 font-bold transition">💰 รายได้ของฉัน</a>
+            <a href="/login" class="block py-4 px-6 text-red-400 mt-10 hover:bg-gray-700 transition">🚪 ออกจากระบบ</a>
+        </nav>
+    </aside>
 
-    <h3 class="font-bold mb-4">ประวัติการอัปโหลดคลิป</h3>
-    <table class="w-full bg-white rounded-lg overflow-hidden shadow">
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="p-3 text-left">ชื่อคลิป</th>
-                <th class="p-3 text-left">สถานะ</th>
-                <th class="p-3 text-left">จำนวนคนซื้อ/ดู</th>
-                <th class="p-3 text-left">ยอดเงิน (60%)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% videos.forEach(video => { %>
-            <tr class="border-t">
-                <td class="p-3"><%= video.title %></td>
-                <td class="p-3">
-                    <span class="<%= video.status === 'approved' ? 'text-green-500' : 'text-orange-500' %>">
-                        <%= video.status === 'approved' ? 'อนุมัติแล้ว' : 'รอตรวจสอบ' %>
-                    </span>
-                </td>
-                <td class="p-3"><%= video.views %> User</td>
-                <td class="p-3">฿ <%= (video.views * video.price * 0.6).toFixed(2) %></td>
-            </tr>
-            <% }) %>
-        </tbody>
-    </table>
-</div>
+    <main class="flex-1 overflow-y-auto p-8">
+        <h2 class="text-3xl font-bold mb-8 text-gray-800"><i class="fa-solid fa-wallet text-[#1A73E8] mr-2"></i> รายได้และสถิติของคุณ</h2>
+        
+        <div class="bg-gradient-to-r from-green-400 to-green-600 p-8 rounded-3xl shadow-lg mb-10 text-white">
+            <p class="text-green-100 font-medium text-lg">รายได้สะสมที่ถอนได้ (ส่วนแบ่ง 60%)</p>
+            <h1 class="text-5xl font-black mt-2">฿ <%= totalRevenue.toLocaleString('th-TH', {minimumFractionDigits: 2}) %></h1>
+        </div>
+
+        <h3 class="font-bold text-xl mb-4 text-gray-700">ประวัติการอัปโหลดคลิปของคุณ</h3>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-gray-100 border-b border-gray-200">
+                    <tr>
+                        <th class="p-4 font-bold text-gray-600">ชื่อคลิป / วิชา</th>
+                        <th class="p-4 font-bold text-gray-600 text-center">สถานะ</th>
+                        <th class="p-4 font-bold text-gray-600 text-center">ราคาตั้งขาย</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <% if (videos.length === 0) { %>
+                        <tr><td colspan="3" class="p-8 text-center text-gray-400">ยังไม่มีประวัติการอัปโหลด</td></tr>
+                    <% } %>
+                    <% videos.forEach(video => { %>
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4">
+                            <p class="font-bold text-gray-800"><%= video.title %></p>
+                            <p class="text-xs text-gray-500"><%= video.level %> | <%= video.subject %></p>
+                        </td>
+                        <td class="p-4 text-center">
+                            <% if (video.status === 'approved') { %>
+                                <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-check-circle"></i> อนุมัติแล้ว</span>
+                            <% } else if (video.status === 'rejected') { %>
+                                <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-xmark-circle"></i> ปฏิเสธ (เนื้อหาไม่ผ่าน)</span>
+                            <% } else { %>
+                                <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-clock"></i> รอตรวจสอบ</span>
+                            <% } %>
+                        </td>
+                        <td class="p-4 text-center font-bold text-gray-700">฿<%= video.price %></td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>
