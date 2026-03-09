@@ -386,29 +386,51 @@ app.get('/courses', (req, res) => res.render('courses'));
 app.get('/tutors', (req, res) => res.render('tutors'));
 // =======================================================
 
-// --- ส่วนของ ADMIN: หน้าอนุมัติคลิป ---
+// ================= ROUTE ฝั่ง ADMIN =================
+
+// --- ส่วนของ ADMIN: หน้า Dashboard หลัก ---
 app.get('/admin/approval', async (req, res) => {
-    // ล็อกประตูกันคนพิมพ์ URL เข้ามาตรงๆ (ต้องเป็น user ที่ชื่อ admin เท่านั้น!)
     if (req.session.username !== 'admin') {
         return res.send('<script>alert("ไม่มีสิทธิ์เข้าถึง! เฉพาะ Master Admin เท่านั้น"); window.location="/login";</script>');
     }
 
     try {
+        // 1. ดึงข้อมูลคลิปที่รอตรวจ
         const pendingVideos = await Video.find({ status: 'pending' }).populate('tutorId');
-        const allVideos = await Video.find({ status: 'approved' });
-        const totalRevenue = allVideos.reduce((sum, v) => sum + (v.views * v.price), 0);
-        res.render('admin_approval', { pendingVideos, totalRevenue });
+        
+        // 2. ดึงข้อมูลสลิปโอนเงินที่รอตรวจ (ดึงชื่อนักเรียน และ ชื่อคลิป มาด้วย)
+        const pendingOrders = await Order.find({ status: 'pending' })
+                                        .populate('studentId', 'username')
+                                        .populate('videoId', 'title price');
+
+        // 3. คำนวณรายได้รวมทั้งหมด (จากออเดอร์ที่แอดมินอนุมัติสลิปแล้ว)
+        const approvedOrders = await Order.find({ status: 'approved' });
+        const totalRevenue = approvedOrders.reduce((sum, order) => sum + order.amount, 0);
+
+        res.render('admin_approval', { pendingVideos, pendingOrders, totalRevenue });
     } catch (err) {
+        console.error(err);
         res.status(500).send("Admin Error");
     }
 });
 
-// --- ส่วนของ ADMIN: กดปุ่ม อนุมัติ/ปฏิเสธ ---
+// --- API สำหรับเปลี่ยนสถานะ "วิดีโอ" ---
 app.post('/admin/update-video-status', async (req, res) => {
     const { videoId, status } = req.body;
     try {
         await Video.findByIdAndUpdate(videoId, { status: status });
-        res.json({ message: `อัปเดตสถานะเป็น ${status} เรียบร้อยแล้ว` });
+        res.json({ message: `อัปเดตสถานะคลิปเป็น ${status} เรียบร้อยแล้ว` });
+    } catch (err) {
+        res.status(500).json({ message: "Update Error" });
+    }
+});
+
+// --- API สำหรับเปลี่ยนสถานะ "สลิปโอนเงิน" (มาใหม่!) ---
+app.post('/admin/update-order-status', async (req, res) => {
+    const { orderId, status } = req.body;
+    try {
+        await Order.findByIdAndUpdate(orderId, { status: status });
+        res.json({ message: `อัปเดตสถานะการชำระเงินเป็น ${status} เรียบร้อยแล้ว` });
     } catch (err) {
         res.status(500).json({ message: "Update Error" });
     }

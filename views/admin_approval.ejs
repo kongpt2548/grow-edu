@@ -5,78 +5,123 @@
     <title>Admin Dashboard - Grow EDU</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Kanit', sans-serif; }</style>
 </head>
-<body class="bg-gray-100 font-sans">
-    <div class="flex">
-        <div class="w-64 bg-slate-900 h-screen sticky top-0 text-white p-6">
-            <h1 class="text-2xl font-bold text-blue-400 mb-10">Grow EDU Admin</h1>
-            <nav class="space-y-4">
-                <a href="#" class="block p-3 bg-blue-600 rounded-lg">ตรวจสอบวิดีโอ</a>
-                <a href="#" class="block p-3 hover:bg-slate-800 rounded-lg">จัดการผู้ใช้</a>
-            </nav>
+<body class="bg-gray-100 font-sans flex">
+
+    <div class="w-64 bg-slate-900 h-screen sticky top-0 text-white p-6 shadow-xl flex-shrink-0">
+        <h1 class="text-2xl font-black text-[#1A73E8] mb-10 border-b border-slate-700 pb-4">Grow EDU Admin</h1>
+        <nav class="space-y-2">
+            <a href="/admin/approval" class="block p-4 bg-[#1A73E8] rounded-xl font-bold shadow-lg"><i class="fa-solid fa-list-check mr-2"></i> ศูนย์ตรวจสอบ</a>
+            <a href="/login" class="block p-4 hover:bg-slate-800 rounded-xl text-red-400 transition mt-10"><i class="fa-solid fa-right-from-bracket mr-2"></i> ออกจากระบบ</a>
+        </nav>
+    </div>
+
+    <main class="flex-1 p-10 overflow-y-auto h-screen">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div class="bg-white p-8 rounded-3xl shadow-sm border-t-4 border-green-500 relative overflow-hidden">
+                <i class="fa-solid fa-sack-dollar absolute -right-4 -bottom-4 text-8xl text-green-50 opacity-50"></i>
+                <p class="text-gray-500 font-bold mb-1">รายได้รวมทั้งหมด (Gross Revenue)</p>
+                <h2 class="text-5xl font-black text-gray-800">฿ <%= totalRevenue.toLocaleString('th-TH', {minimumFractionDigits: 2}) %></h2>
+            </div>
+            <div class="bg-white p-8 rounded-3xl shadow-sm border-t-4 border-blue-500 relative overflow-hidden">
+                <i class="fa-solid fa-piggy-bank absolute -right-4 -bottom-4 text-8xl text-blue-50 opacity-50"></i>
+                <p class="text-gray-500 font-bold mb-1">กำไรสุทธิแพลตฟอร์ม (40%)</p>
+                <h2 class="text-5xl font-black text-[#1A73E8]">฿ <%= (totalRevenue * 0.4).toLocaleString('th-TH', {minimumFractionDigits: 2}) %></h2>
+            </div>
         </div>
 
-        <main class="flex-1 p-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                <div class="bg-white p-8 rounded-3xl shadow-sm border-t-4 border-green-500">
-                    <p class="text-gray-500 text-sm">รายได้รวมทั้งหมด (Gross Revenue)</p>
-                    <h2 class="text-4xl font-bold text-gray-800">฿ <%= totalRevenue.toLocaleString() %></h2>
-                </div>
-                <div class="bg-white p-8 rounded-3xl shadow-sm border-t-4 border-blue-500">
-                    <p class="text-gray-500 text-sm">กำไรสุทธิ (ส่วนแบ่ง 40%)</p>
-                    <h2 class="text-4xl font-bold text-blue-600">฿ <%= (totalRevenue * 0.4).toLocaleString() %></h2>
-                </div>
-            </div>
-
-            <h3 class="text-xl font-bold mb-6">รายการคลิปที่รอการตรวจสอบ (Pending)</h3>
-            
-            <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-50 border-b">
-                        <tr>
-                            <th class="p-4">ติวเตอร์</th>
-                            <th class="p-4">ชื่อคลิป/ระดับชั้น</th>
-                            <th class="p-4">ลิงก์ Drive</th>
-                            <th class="p-4">ราคา</th>
-                            <th class="p-4 text-center">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (pendingVideos.length === 0) { %>
-                            <tr><td colspan="5" class="p-10 text-center text-gray-400">ไม่มีคลิปค้างตรวจสอบ</td></tr>
-                        <% } %>
-                        <% pendingVideos.forEach(video => { %>
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="p-4 font-medium"><%= video.tutorId.username %></td>
-                            <td class="p-4">
-                                <p class="font-bold"><%= video.title %></p>
-                                <p class="text-xs text-gray-500"><%= video.level %> | <%= video.subject %></p>
+        <h3 class="text-2xl font-bold mb-6 text-gray-800"><i class="fa-solid fa-money-bill-transfer text-green-500 mr-2"></i> รายการสลิปโอนเงินที่รอตรวจสอบ</h3>
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-12 border border-gray-200">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="p-4 font-bold text-gray-600">นักเรียน</th>
+                        <th class="p-4 font-bold text-gray-600">คอร์สที่ซื้อ</th>
+                        <th class="p-4 font-bold text-gray-600">ยอดโอน</th>
+                        <th class="p-4 font-bold text-gray-600 text-center">หลักฐาน</th>
+                        <th class="p-4 font-bold text-gray-600 text-center">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <% if (typeof pendingOrders !== 'undefined' && pendingOrders.length === 0) { %>
+                        <tr><td colspan="5" class="p-10 text-center text-gray-400">✅ ไม่มีสลิปค้างตรวจสอบ</td></tr>
+                    <% } %>
+                    <% if (typeof pendingOrders !== 'undefined') { %>
+                        <% pendingOrders.forEach(order => { %>
+                        <tr class="hover:bg-blue-50 transition">
+                            <td class="p-4 font-medium text-gray-800"><i class="fa-solid fa-user-graduate text-gray-400 mr-2"></i><%= order.studentId ? order.studentId.username : 'ไม่ทราบชื่อ' %></td>
+                            <td class="p-4 font-bold text-[#1A73E8]"><%= order.videoId ? order.videoId.title : 'คอร์สถูกลบ' %></td>
+                            <td class="p-4 font-black text-green-600 text-lg">฿<%= order.amount %></td>
+                            <td class="p-4 text-center">
+                                <button onclick="viewSlip('<%= order.slipImage %>')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm">
+                                    <i class="fa-solid fa-image mr-1"></i> ดูสลิป
+                                </button>
                             </td>
-                            <td class="p-4">
-                                <a href="https://drive.google.com/file/d/<%= video.driveFileId %>/view" target="_blank" class="text-blue-600 underline text-sm">เปิดดูคลิป 🔗</a>
-                            </td>
-                            <td class="p-4 font-bold text-green-600">฿<%= video.price %></td>
                             <td class="p-4 text-center space-x-2">
-                                <button onclick="updateStatus('<%= video._id %>', 'approved')" class="bg-green-500 text-white px-4 py-1 rounded-full text-sm hover:bg-green-600">อนุมัติ</button>
-                                <button onclick="updateStatus('<%= video._id %>', 'rejected')" class="bg-red-500 text-white px-4 py-1 rounded-full text-sm hover:bg-red-600">ปฏิเสธ</button>
+                                <button onclick="updateOrderStatus('<%= order._id %>', 'approved')" class="bg-green-500 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-green-600 shadow-md transition">อนุมัติ</button>
+                                <button onclick="updateOrderStatus('<%= order._id %>', 'rejected')" class="bg-red-500 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-red-600 shadow-md transition">ปฏิเสธ</button>
                             </td>
                         </tr>
                         <% }) %>
-                    </tbody>
-                </table>
-            </div>
-        </main>
-    </div>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="text-2xl font-bold mb-6 text-gray-800"><i class="fa-solid fa-video text-orange-500 mr-2"></i> รายการคลิปวิดีโอที่รอตรวจสอบ</h3>
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-12 border border-gray-200">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="p-4 font-bold text-gray-600">ติวเตอร์</th>
+                        <th class="p-4 font-bold text-gray-600">ชื่อคลิป/วิชา</th>
+                        <th class="p-4 font-bold text-gray-600 text-center">ลิงก์ Drive</th>
+                        <th class="p-4 font-bold text-gray-600">ราคาขาย</th>
+                        <th class="p-4 font-bold text-gray-600 text-center">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <% if (pendingVideos.length === 0) { %>
+                        <tr><td colspan="5" class="p-10 text-center text-gray-400">✅ ไม่มีคลิปค้างตรวจสอบ</td></tr>
+                    <% } %>
+                    <% pendingVideos.forEach(video => { %>
+                    <tr class="hover:bg-blue-50 transition">
+                        <td class="p-4 font-medium text-gray-800"><i class="fa-solid fa-chalkboard-user text-gray-400 mr-2"></i><%= video.tutorId ? video.tutorId.username : 'ไม่ทราบชื่อ' %></td>
+                        <td class="p-4">
+                            <p class="font-bold text-[#1A73E8]"><%= video.title %></p>
+                            <p class="text-xs text-gray-500 mt-1 bg-gray-100 inline-block px-2 py-1 rounded"><%= video.level %> | <%= video.subject %></p>
+                        </td>
+                        <td class="p-4 text-center">
+                            <a href="https://drive.google.com/file/d/<%= video.driveFileId %>/view" target="_blank" class="bg-blue-100 hover:bg-blue-200 text-[#1A73E8] px-4 py-2 rounded-lg text-sm font-bold transition shadow-sm inline-block">
+                                <i class="fa-brands fa-google-drive mr-1"></i> เปิดดูคลิป
+                            </a>
+                        </td>
+                        <td class="p-4 font-black text-gray-700 text-lg">฿<%= video.price %></td>
+                        <td class="p-4 text-center space-x-2">
+                            <button onclick="updateVideoStatus('<%= video._id %>', 'approved')" class="bg-green-500 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-green-600 shadow-md transition">อนุมัติ</button>
+                            <button onclick="updateVideoStatus('<%= video._id %>', 'rejected')" class="bg-red-500 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-red-600 shadow-md transition">ปฏิเสธ</button>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </main>
 
     <script>
-        function updateStatus(videoId, status) {
+        // 1. ฟังก์ชันอนุมัติวิดีโอ
+        function updateVideoStatus(videoId, status) {
             Swal.fire({
                 title: 'ยืนยันการทำรายการ?',
-                text: "คลิปนี้จะถูก " + (status === 'approved' ? 'แสดงผล' : 'ตีกลับ'),
+                text: "คลิปนี้จะถูก " + (status === 'approved' ? 'แสดงผลให้นักเรียนเห็น' : 'ตีกลับไปหาติวเตอร์'),
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
+                confirmButtonColor: status === 'approved' ? '#10B981' : '#EF4444',
+                cancelButtonColor: '#9CA3AF',
                 confirmButtonText: 'ยืนยัน',
                 cancelButtonText: 'ยกเลิก'
             }).then((result) => {
@@ -87,11 +132,46 @@
                         body: JSON.stringify({ videoId, status })
                     })
                     .then(res => res.json())
-                    .then(data => {
-                        Swal.fire('สำเร็จ!', data.message, 'success').then(() => location.reload());
-                    });
+                    .then(data => Swal.fire('สำเร็จ!', data.message, 'success').then(() => location.reload()));
                 }
             })
+        }
+
+        // 2. ฟังก์ชันอนุมัติสลิปโอนเงิน
+        function updateOrderStatus(orderId, status) {
+            Swal.fire({
+                title: 'ยืนยันการตรวจสอบสลิป?',
+                text: status === 'approved' ? "นักเรียนจะสามารถเข้าเรียนคอร์สนี้ได้ทันที" : "คำสั่งซื้อนี้จะถูกยกเลิก (สลิปไม่ถูกต้อง)",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: status === 'approved' ? '#10B981' : '#EF4444',
+                cancelButtonColor: '#9CA3AF',
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/admin/update-order-status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderId, status })
+                    })
+                    .then(res => res.json())
+                    .then(data => Swal.fire('สำเร็จ!', data.message, 'success').then(() => location.reload()));
+                }
+            })
+        }
+
+        // 3. ฟังก์ชันเปิดดูรูปสลิป
+        function viewSlip(base64Image) {
+            Swal.fire({
+                title: 'หลักฐานการโอนเงิน',
+                imageUrl: base64Image,
+                imageAlt: 'Slip Image',
+                width: 450,
+                confirmButtonText: 'ปิดหน้าต่าง',
+                confirmButtonColor: '#1A73E8',
+                customClass: { image: 'rounded-xl shadow-md border border-gray-200' }
+            });
         }
     </script>
 </body>
