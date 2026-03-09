@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('dns').setDefaultResultOrder('ipv4first');
 const express = require('express');
 const axios = require('axios'); 
 const mongoose = require('mongoose');
@@ -8,9 +9,7 @@ const client = SibApiV3Sdk.ApiClient.instance;
 client.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
 const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
