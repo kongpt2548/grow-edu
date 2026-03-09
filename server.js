@@ -202,33 +202,6 @@ app.post('/api/submit-payment', async (req, res) => {
     }
 });
 
-// หน้า Admin Approval
-app.get('/admin/approval', async (req, res) => {
-    try {
-        // ดึงคลิปที่สถานะเป็น pending มาตรวจสอบ
-        const pendingVideos = await Video.find({ status: 'pending' }).populate('tutorId');
-        
-        // คำนวณรายได้ทั้งหมดของระบบ (สมมติว่าเอามาจากยอดรวมของคลิปที่มีคนดู/ซื้อไปแล้ว)
-        // ในระบบจริง คุณอาจต้องมีคอลเลกชัน Transaction เพื่อเก็บยอดซื้อ
-        const allVideos = await Video.find({ status: 'approved' });
-        const totalRevenue = allVideos.reduce((sum, v) => sum + (v.views * v.price), 0);
-
-        res.render('admin_approval', { pendingVideos, totalRevenue });
-    } catch (err) {
-        res.status(500).send("Admin Error");
-    }
-});
-
-// API สำหรับเปลี่ยนสถานะวิดีโอ
-app.post('/admin/update-video-status', async (req, res) => {
-    const { videoId, status } = req.body;
-    try {
-        await Video.findByIdAndUpdate(videoId, { status: status });
-        res.json({ message: `อัปเดตสถานะเป็น ${status} เรียบร้อยแล้ว` });
-    } catch (err) {
-        res.status(500).json({ message: "เกิดข้อผิดพลาด" });
-    }
-});
 // ================= ROUTE หน้าเว็บ =================
 // หน้าแรกของเว็บ (Landing Page)
 app.get('/', (req, res) => {
@@ -376,10 +349,6 @@ app.post('/login', async (req, res) => {
         res.status(500).json({ success: false, message: 'เกิดข้อผิดพลาดของระบบ' });
     }
 });
-
-app.get('/student', (req, res) => res.render('student_dashboard'));
-app.get('/courses', (req, res) => res.render('courses'));
-app.get('/tutors', (req, res) => res.render('tutors'));
 // =======================================================
 
 // ================= ROUTE ฝั่ง ADMIN =================
